@@ -38,7 +38,7 @@ function AccountProgram() {
         if (order.approval_url) {
           if (!/^https:\/\/(www\.)?sandbox\.paypal\.com\//.test(order.approval_url)) throw new Error('Invalid checkout link.');
           await Linking.openURL(order.approval_url);
-          setNotice('After approving in PayPal, return here and tap Verify payment. If you cancelled, access stays locked.');
+          setNotice('After approving in PayPal, hosted web checkout verifies automatically. In the mobile app, return here and tap Verify payment.');
         } else setNotice('This order is ready to verify. Tap Verify payment.');
       } else if (action === 'verify' && access?.pending_order_id) {
         await paymentRequest(`/api/paypal/orders/${encodeURIComponent(access.pending_order_id)}/capture`, 'POST');

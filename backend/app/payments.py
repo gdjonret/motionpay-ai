@@ -7,7 +7,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import urlparse
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from app.auth import require_user
 from app.program_content import content
@@ -198,18 +198,19 @@ async def capture_order(order_id: str, user_id: str = Depends(require_user)):
         raise HTTPException(502, 'Unable to confirm payment. Retry verification; do not pay again.') from None
 
 
-def web_app_return(status: str):
+def web_app_return(status: str, order_id: str | None = None):
     """Return hosted web checkouts to the configured app without trusting request input."""
     app_url = os.getenv('PUBLIC_APP_URL', '').strip().rstrip('/')
     parsed = urlparse(app_url)
     if parsed.scheme in ('https', 'http') and parsed.netloc:
-        return RedirectResponse(f'{app_url}/?checkout={status}', status_code=303)
+        query = f'order_id={order_id}' if order_id and re.fullmatch(r'[A-Z0-9]{8,40}', order_id) else f'status={status}'
+        return RedirectResponse(f'{app_url}/checkout-return?{query}', status_code=303)
     return None
 
 
 @router.get('/api/paypal/return', response_class=HTMLResponse)
-async def paypal_return():
-    redirect = web_app_return('returned')
+async def paypal_return(token: str | None = Query(default=None, max_length=40)):
+    redirect = web_app_return('returned', token)
     if redirect:
         return redirect
     return '<html><meta name="viewport" content="width=device-width,initial-scale=1"><body><h1>Return to MotionPay</h1><p>Checkout returned. Switch back to MotionPay and tap Verify payment. Approval and payment status are checked by the server; this page does not unlock access.</p><a href="motionpay://program">Open MotionPay (installed development build)</a><p>In Expo Go, switch back to the app manually.</p></body></html>'

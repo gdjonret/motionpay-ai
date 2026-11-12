@@ -71,12 +71,21 @@ def test_checkout_requires_account():
     assert TestClient(main.app).post('/api/paypal/orders').status_code == 401
 
 
-@pytest.mark.parametrize(('path', 'status'), [('/api/paypal/return', 'returned'), ('/api/paypal/cancel', 'cancelled')])
-def test_hosted_checkout_returns_to_web_app(monkeypatch, path, status):
+@pytest.mark.parametrize(('path', 'location'), [
+    ('/api/paypal/return?token=ABC123456789', 'https://motionpay.example/checkout-return?order_id=ABC123456789'),
+    ('/api/paypal/cancel', 'https://motionpay.example/checkout-return?status=cancelled'),
+])
+def test_hosted_checkout_returns_to_web_app(monkeypatch, path, location):
     monkeypatch.setenv('PUBLIC_APP_URL', 'https://motionpay.example/')
     response = TestClient(main.app, follow_redirects=False).get(path)
     assert response.status_code == 303
-    assert response.headers['location'] == f'https://motionpay.example/?checkout={status}'
+    assert response.headers['location'] == location
+
+
+def test_checkout_return_does_not_forward_invalid_token(monkeypatch):
+    monkeypatch.setenv('PUBLIC_APP_URL', 'https://motionpay.example')
+    response = TestClient(main.app, follow_redirects=False).get('/api/paypal/return?token=not-safe')
+    assert response.headers['location'] == 'https://motionpay.example/checkout-return?status=returned'
 
 
 def test_checkout_return_rejects_unsafe_app_url(monkeypatch):

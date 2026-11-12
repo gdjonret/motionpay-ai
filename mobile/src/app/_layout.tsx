@@ -13,6 +13,7 @@ export default function RootLayout() {
         <Stack.Screen name="index" />
         <Stack.Screen name="onboarding" />
         <Stack.Screen name="sign-in" />
+        <Stack.Screen name="checkout-return" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="exercise" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="collection" options={{ animation: 'slide_from_right' }} />
