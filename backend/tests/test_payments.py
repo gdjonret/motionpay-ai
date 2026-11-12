@@ -69,3 +69,18 @@ def test_not_approved_remains_locked(client, monkeypatch):
 
 def test_checkout_requires_account():
     assert TestClient(main.app).post('/api/paypal/orders').status_code == 401
+
+
+@pytest.mark.parametrize(('path', 'status'), [('/api/paypal/return', 'returned'), ('/api/paypal/cancel', 'cancelled')])
+def test_hosted_checkout_returns_to_web_app(monkeypatch, path, status):
+    monkeypatch.setenv('PUBLIC_APP_URL', 'https://motionpay.example/')
+    response = TestClient(main.app, follow_redirects=False).get(path)
+    assert response.status_code == 303
+    assert response.headers['location'] == f'https://motionpay.example/?checkout={status}'
+
+
+def test_checkout_return_rejects_unsafe_app_url(monkeypatch):
+    monkeypatch.setenv('PUBLIC_APP_URL', 'javascript:alert(1)')
+    response = TestClient(main.app).get('/api/paypal/return')
+    assert response.status_code == 200
+    assert 'Return to MotionPay' in response.text

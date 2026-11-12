@@ -14,7 +14,7 @@ The API is hard-coded to PayPal sandbox; this build cannot charge real money.
 
 1. Sign in to MotionPay and open Beginner Strength Essentials.
 2. Tap Continue to PayPal. Use your sandbox **personal buyer** account from PayPal Developer > Testing Tools > Sandbox Accounts, not your real PayPal account or seller account.
-3. Approve the sandbox purchase. Return to MotionPay manually and tap Verify payment. The return page itself does not capture or grant access.
+3. Approve the sandbox purchase. Hosted web deployments configured with `PUBLIC_APP_URL` return to MotionPay automatically; otherwise return manually. Tap Verify payment. The return redirect itself does not capture or grant access.
 4. Open your program. Close/reopen it and verify access persists.
 5. Test a different account cancelling checkout: Verify payment must keep it locked. Different users cannot verify or open another user's purchase.
 

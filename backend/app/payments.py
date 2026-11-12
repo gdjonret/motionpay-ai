@@ -8,7 +8,7 @@ from urllib.parse import urlparse
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from app.auth import require_user
 from app.program_content import content
 
@@ -198,13 +198,28 @@ async def capture_order(order_id: str, user_id: str = Depends(require_user)):
         raise HTTPException(502, 'Unable to confirm payment. Retry verification; do not pay again.') from None
 
 
+def web_app_return(status: str):
+    """Return hosted web checkouts to the configured app without trusting request input."""
+    app_url = os.getenv('PUBLIC_APP_URL', '').strip().rstrip('/')
+    parsed = urlparse(app_url)
+    if parsed.scheme in ('https', 'http') and parsed.netloc:
+        return RedirectResponse(f'{app_url}/?checkout={status}', status_code=303)
+    return None
+
+
 @router.get('/api/paypal/return', response_class=HTMLResponse)
 async def paypal_return():
+    redirect = web_app_return('returned')
+    if redirect:
+        return redirect
     return '<html><meta name="viewport" content="width=device-width,initial-scale=1"><body><h1>Return to MotionPay</h1><p>Checkout returned. Switch back to MotionPay and tap Verify payment. Approval and payment status are checked by the server; this page does not unlock access.</p><a href="motionpay://program">Open MotionPay (installed development build)</a><p>In Expo Go, switch back to the app manually.</p></body></html>'
 
 
 @router.get('/api/paypal/cancel', response_class=HTMLResponse)
 async def paypal_cancel():
+    redirect = web_app_return('cancelled')
+    if redirect:
+        return redirect
     return '<html><meta name="viewport" content="width=device-width,initial-scale=1"><body><h1>Checkout cancelled</h1><p>No access was unlocked. Return to MotionPay whenever you are ready.</p></body></html>'
 
 
