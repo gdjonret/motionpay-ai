@@ -1,0 +1,8 @@
+.git
+.mobile-git-backup
+**/.env*
+**/.venv
+**/node_modules
+**/.expo
+**/__pycache__
+**/dist
